@@ -1,0 +1,5 @@
+# Keep LF everywhere so the vendored three.js keeps its verified sha256 on any OS.
+* text=auto eol=lf
+*.webp binary
+*.png binary
+*.jpg binary
