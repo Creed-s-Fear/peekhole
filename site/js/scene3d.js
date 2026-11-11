@@ -1,9 +1,3 @@
-// Hero 3D scene: the Jack of Hearts card, spinning $PEEK coins, bills and glossy hearts.
-// Loaded lazily (dynamic import) after the age gate, so three.js (~170 KB gzip) never blocks
-// first paint. All textures are drawn on <canvas> at runtime: no image requests, CSP stays 'self'.
-// Performance guards: DPR cap, render loop paused when off-screen or tab hidden,
-// a single static frame under prefers-reduced-motion, and graceful fallback to the CSS poster.
-
 import * as THREE from './vendor/three.module.min.js';
 
 const HEART_KEY = new Path2D('M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35zM12 7.4a2.3 2.3 0 0 0-1.15 4.29L10.3 15.6h3.4l-.55-3.91A2.3 2.3 0 0 0 12 7.4z');
@@ -15,7 +9,6 @@ const CARD_R = 0.16;
 const RED = '#d61f45';
 const INK = '#1a0b12';
 
-/* ------------------------------------------------------------ canvas helpers */
 function makeCanvas(w, h) {
   const c = document.createElement('canvas');
   c.width = w;
@@ -33,7 +26,6 @@ function roundRectPath(g, x, y, w, h, r) {
   g.closePath();
 }
 
-// Draws a 24-unit SVG path centred at (cx, cy) with the given width.
 function drawIcon(g, path, cx, cy, width, rule = 'nonzero') {
   const s = width / 20;
   g.save();
@@ -47,7 +39,6 @@ function spacing(g, px) {
   if ('letterSpacing' in g) g.letterSpacing = `${px}px`;
 }
 
-// Shrinks the font until the text fits maxWidth.
 function fitFont(g, text, maxWidth, weight, family, size) {
   let s = size;
   g.font = `${weight} ${s}px ${family}`;
@@ -57,7 +48,6 @@ function fitFont(g, text, maxWidth, weight, family, size) {
   }
 }
 
-/* ---------------------------------------------------------------- textures */
 function cardFrontCanvas() {
   const W = 1000;
   const H = 1400;
@@ -119,7 +109,7 @@ function cardFrontCanvas() {
 
   spacing(g, 9);
   g.font = '700 38px Barlow, system-ui, sans-serif';
-  g.fillText('DOORS 10PM · TIPS IN $PEEK', W / 2 + 4, 1010);
+  g.fillText('DOORS 10PM · TIPS IN PEEK CASH', W / 2 + 4, 1010);
 
   g.fillStyle = '#6b3a4c';
   spacing(g, 5);
@@ -145,7 +135,6 @@ function cardBackCanvas() {
   g.fillStyle = bg;
   g.fillRect(0, 0, W, H);
 
-  // Diamond lattice
   g.strokeStyle = 'rgba(255, 255, 255, 0.12)';
   g.lineWidth = 3;
   for (let i = -H; i < W + H; i += 56) {
@@ -201,7 +190,6 @@ function coinFaceCanvas() {
   g.beginPath(); g.arc(r, r, r - 14, 0, Math.PI * 2); g.stroke();
   g.setLineDash([]);
 
-  // Embossed heart-keyhole: highlight, shadow, body
   g.fillStyle = 'rgba(255, 250, 220, 0.9)';
   drawIcon(g, HEART_KEY, r - 4, r - 30, 250, 'evenodd');
   g.fillStyle = 'rgba(90, 55, 0, 0.55)';
@@ -213,7 +201,7 @@ function coinFaceCanvas() {
   g.fillStyle = '#7a4e00';
   spacing(g, 6);
   g.font = '400 70px "Bebas Neue", Impact, sans-serif';
-  g.fillText('$PEEK', r + 3, r + 150);
+  g.fillText('PEEK', r + 3, r + 150);
   return c;
 }
 
@@ -243,8 +231,8 @@ function billCanvas() {
   g.fillText('100', W - 82, H - 44);
   spacing(g, 4);
   g.font = '400 34px "Bebas Neue", Impact, sans-serif';
-  g.fillText('$PEEK', W - 90, 70);
-  g.fillText('$PEEK', 92, H - 50);
+  g.fillText('PEEK', W - 90, 70);
+  g.fillText('PEEK', 92, H - 50);
   return c;
 }
 
@@ -255,8 +243,6 @@ function toTexture(canvas, renderer) {
   return t;
 }
 
-/* ------------------------------------------------------------- environment */
-// Tiny procedural "club" environment for reflections (pink + cyan neon, warm floor light).
 export function makeEnvironment(renderer) {
   const env = new THREE.Scene();
   const disposables = [];
@@ -276,7 +262,6 @@ export function makeEnvironment(renderer) {
     env.add(m);
     disposables.push(m);
   };
-  // Neon accents kept low so gold still reads as gold; white + warm panels do the heavy lifting.
   panel(0xff2e88, 2.2, [-7, 2, 3], 5, 8);
   panel(0x2be4d4, 1.4, [7, -1, 3], 4, 6);
   panel(0xffffff, 7, [0, 8, 4], 12, 4);
@@ -290,7 +275,6 @@ export function makeEnvironment(renderer) {
   return target.texture;
 }
 
-/* ------------------------------------------------------------------ meshes */
 function roundedRectShape(w, h, r) {
   const s = new THREE.Shape();
   const x = -w / 2;
@@ -370,7 +354,6 @@ function buildCoinFactory(renderer) {
   };
 }
 
-/* ------------------------------------------------------------------- mount */
 function waitForFonts(ms) {
   if (!document.fonts?.load) return Promise.resolve();
   const loads = Promise.all([
@@ -409,18 +392,15 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
   key.position.set(3, 4, 6);
   const fill = new THREE.DirectionalLight(0xffffff, 0.6);
   fill.position.set(-4, -1, 5);
-  // Neon rim lights sit behind the scene, so they edge-light instead of tinting the faces.
   const pink = new THREE.PointLight(0xff2e88, 14, 0, 2);
   pink.position.set(-3.5, 1.5, -1.5);
   const cyan = new THREE.PointLight(0x2be4d4, 9, 0, 2);
   cyan.position.set(3.5, -1.5, -1.5);
   scene.add(key, fill, pink, cyan);
 
-  // Card
   const card = buildCard(renderer);
   scene.add(card);
 
-  // Coins
   const makeCoin = buildCoinFactory(renderer);
   const coinSpots = [
     [-2.15, 1.3, 0.6, 1.0], [2.05, 1.75, -0.4, 0.9], [2.3, -0.55, 0.8, 1.05], [-2.3, -1.2, -0.3, 0.85],
@@ -435,7 +415,6 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
     return { mesh, baseY: y, spin: 0.9 + (i % 3) * 0.45, speed: 0.8 + (i % 4) * 0.2, phase: i * 1.3 };
   });
 
-  // Bills
   const billMat = new THREE.MeshStandardMaterial({
     map: toTexture(billCanvas(), renderer), side: THREE.DoubleSide, roughness: 0.75,
   });
@@ -450,7 +429,6 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
     return { mesh, baseY: y, rx, rz, speed: 0.9 + i * 0.25, phase: i * 2.2 };
   });
 
-  // Hearts
   const heartGeo = new THREE.ExtrudeGeometry(heartShape(), {
     depth: 0.28, bevelEnabled: true, bevelThickness: 0.1, bevelSize: 0.08, bevelSegments: 4, curveSegments: 18,
   }).center();
@@ -466,7 +444,6 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
     return { mesh, baseY: y, phase: i * 1.9 };
   });
 
-  /* ---------------------------------------------------------- interaction */
   const pointer = { x: 0, y: 0, inside: false, moved: false };
   const ndc = new THREE.Vector2();
   const raycaster = new THREE.Raycaster();
@@ -502,9 +479,8 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
       if (reducedMotion) { flipCurrent = flipTarget; renderOnce(); }
     }
   });
-  document.addEventListener('perk:rain', () => { boost = 7; });
+  document.addEventListener('peekhole:rain', () => { boost = 7; });
 
-  /* ---------------------------------------------------------------- sizing */
   function fit() {
     const w = canvas.clientWidth;
     const h = canvas.clientHeight;
@@ -512,14 +488,13 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
     renderer.setSize(w, h, false);
     camera.aspect = w / h;
     const halfFov = THREE.MathUtils.degToRad(camera.fov / 2);
-    const need = 3.05; // half-extent of the composition in world units
+    const need = 3.05;
     const dist = Math.max(need / Math.tan(halfFov), need / (Math.tan(halfFov) * camera.aspect));
     camera.position.set(0, 0, dist);
     camera.lookAt(0, 0, 0);
     camera.updateProjectionMatrix();
   }
 
-  /* ---------------------------------------------------------------- loop */
   let t = 0;
   let last = performance.now();
   let raf = 0;
@@ -593,7 +568,7 @@ export async function mountHero3D({ canvas, container, reducedMotion }) {
     e.preventDefault();
     running = false;
     cancelAnimationFrame(raf);
-    container.classList.remove('has-3d'); // fall back to the CSS poster
+    container.classList.remove('has-3d');
   });
 
   fit();

@@ -1,7 +1,3 @@
-// Lineup 3D busts: four ORIGINAL stylised characters modelled procedurally (no assets, no scans).
-// One shared WebGL renderer draws each bust and blits it into the card's 2D canvas, so we use a
-// single GL context for all four cards. Loaded lazily when the lineup approaches the viewport;
-// the loop pauses off-screen / in background tabs; reduced-motion gets one static frame.
 
 import * as THREE from './vendor/three.module.min.js';
 import { makeEnvironment } from './scene3d.js';

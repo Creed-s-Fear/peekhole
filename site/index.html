@@ -3,20 +3,23 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-  <!-- CSP also sent as an HTTP header (see _headers). Meta copy covers hosts without header support. -->
-  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; connect-src https://api.dexscreener.com; frame-src https://dexscreener.com; base-uri 'none'; form-action 'none'; object-src 'none'">
+  <meta http-equiv="Content-Security-Policy" content="default-src 'self'; script-src 'self'; style-src 'self' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; img-src 'self' data:; base-uri 'none'; form-action 'none'; object-src 'none'">
   <meta name="referrer" content="strict-origin-when-cross-origin">
-  <title>Peekhole · Make It Rain Mondays · $PEEK</title>
-  <meta name="description" content="Jack of Hearts presents Make It Rain Mondays. $PEEK is the Peekhole tip jar on Solana: a fan-made meme coin inspired by the GTA VI trailer.">
+  <title>Peekhole · Vice City</title>
+  <meta name="description" content="Vice City's premiere creator platform. Make It Rain Mondays at Jack of Hearts, 1987 Ocean Drive, Vice Beach. Doors 10PM. Tips in Peek Cash only.">
   <meta name="theme-color" content="#0c0614">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Peekhole · Make It Rain Mondays">
-  <meta property="og:description" content="The tip jar of Vice City, on-chain. $PEEK: a fan-made meme coin.">
+  <meta property="og:description" content="Monday night. Vice City. Make it rain. Peekhole — where Leonida's creators get paid.">
+  <meta property="og:image" content="assets/og-card.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
   <meta name="twitter:card" content="summary">
+  <meta name="twitter:image" content="assets/og-card.png">
   <link rel="icon" href="assets/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="manifest.json">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="preconnect" href="https://api.dexscreener.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@300;400;500;600;700&family=Bebas+Neue&family=Oswald:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&family=Sacramento&display=swap">
   <link rel="stylesheet" href="css/styles.css">
   <script src="js/boot.js"></script>
@@ -33,12 +36,6 @@
     <symbol id="i-send" viewBox="0 0 24 24">
       <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M22 2 11 13M22 2l-7 20-4-9-9-4 20-7z"/>
     </symbol>
-    <symbol id="i-chart" viewBox="0 0 24 24">
-      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M3 3v18h18M7 15l4-4 3 3 6-7"/>
-    </symbol>
-    <symbol id="i-copy" viewBox="0 0 24 24">
-      <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M9 9h11v12H9zM5 15H4V4h11v1"/>
-    </symbol>
     <symbol id="i-menu" viewBox="0 0 24 24">
       <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" d="M4 7h16M4 12h16M4 17h16"/>
     </symbol>
@@ -49,37 +46,36 @@
 
   <a class="skip" href="#main">Skip to content</a>
 
-  <!-- Age gate: shown only when JS runs and the visitor hasn't confirmed this session (see boot.js). -->
   <div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gate-title" aria-describedby="gate-desc">
     <div class="gate-card">
       <svg class="gate-mark" aria-hidden="true"><use href="#i-heart-key"/></svg>
       <p class="gate-from" id="gate-from" hidden>You scanned the Make It Rain Mondays poster ♥</p>
-      <h1 class="gate-title" id="gate-title">Velvet rope</h1>
-      <p class="gate-desc" id="gate-desc">Peekhole is for grown-ups. Confirm you're 18 or older to come inside.</p>
+      <h1 class="gate-title" id="gate-title">Members Only</h1>
+      <p class="gate-desc" id="gate-desc">Peekhole doesn't open for just anyone. Confirm you're 18 or older and we'll hold the door.</p>
       <div class="gate-actions">
-        <button type="button" class="btn btn-primary" id="gate-enter">I'm 18+ · Let me in</button>
+        <button type="button" class="btn btn-primary" id="gate-enter">I'm 18+ · Step Inside</button>
         <a class="btn btn-ghost" href="https://www.google.com/" rel="noopener noreferrer">Leave</a>
       </div>
-      <p class="gate-fine">Fan-made parody inspired by the GTA VI trailer. Not affiliated with Rockstar Games or Take-Two Interactive.</p>
+      <p class="gate-fine">A Peekhole Entertainment venture · Vice City, Leonida · All rights reserved</p>
     </div>
   </div>
 
   <div id="app">
     <div class="grain" aria-hidden="true"></div>
-    <!-- Decorative marquee; the same data is exposed accessibly in the #token section. -->
     <div class="ticker" aria-hidden="true">
       <div class="ticker-track" id="ticker-track">
         <div class="ticker-group">
-          <span class="tk-state" data-f="state">Pre-launch</span>
-          <span class="tk-sym">$PEEK</span>
-          <span class="tk-price" data-f="price">—</span>
-          <span class="tk-stat tk-delta" data-f="change">—</span>
-          <span class="tk-stat">MCAP <b data-f="mcap">—</b></span>
-          <span class="tk-stat">LIQ <b data-f="liq">—</b></span>
-          <span class="tk-stat">VOL 24H <b data-f="vol">—</b></span>
           <span class="tk-msg">♥ Make It Rain Mondays @ Jack of Hearts</span>
-          <span class="tk-msg">Doors 10PM · Vice City</span>
-          <span class="tk-msg">The bouncer never DMs first</span>
+          <span class="tk-msg">Doors 10PM · Vice City, Leonida</span>
+          <span class="tk-msg">Tips in Peek Cash only</span>
+          <span class="tk-msg">Payments powered by Maze Bank Digital</span>
+          <span class="tk-msg">VIP lounge open for top tippers</span>
+          <span class="tk-msg">New creators every Monday</span>
+          <span class="tk-msg">1987 Ocean Drive · Vice Beach</span>
+          <span class="tk-msg">Now available on iFruit</span>
+          <span class="tk-msg">Tonight's drink special: Pi&szlig;wasser on tap $6</span>
+          <span class="tk-msg">Reservations: 555-PEEK</span>
+          <span class="tk-msg">Proud partner of Sprunk&reg;</span>
         </div>
       </div>
     </div>
@@ -93,12 +89,12 @@
         <nav class="nav" id="nav" aria-label="Main">
           <a href="#club">The Club</a>
           <a href="#lineup">Lineup</a>
-          <a href="#token">$PEEK</a>
-          <a href="#buy">How to buy</a>
+          <a href="#token">How It Works</a>
+          <a href="#buy">Join</a>
           <a href="#faq">FAQ</a>
         </nav>
         <div class="header-cta">
-          <a class="btn btn-primary btn-sm" href="#buy">Buy $PEEK</a>
+          <a class="btn btn-primary btn-sm" href="#buy">Join the Club</a>
           <button class="nav-toggle" id="nav-toggle" type="button" aria-expanded="false" aria-controls="nav" aria-label="Open menu">
             <svg aria-hidden="true"><use href="#i-menu"/></svg>
           </button>
@@ -111,23 +107,15 @@
       <section class="hero" id="top">
         <div class="wrap hero-grid">
           <div class="hero-copy">
-            <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Jack of Hearts presents</p>
+            <p class="eyebrow"><span class="dot" aria-hidden="true"></span>Jack of Hearts presents &middot; Vice City, Leonida &middot; Est. MMXXVI</p>
             <h1 class="hero-title">
               <span class="neon">Make It Rain</span>
               <span class="block">Mondays</span>
             </h1>
-            <p class="lede">The tip jar of Vice City just went on-chain. <strong>$PEEK</strong> is Peekhole's coin for tipping the creators you can't stop peeking at, and the only money that falls from the ceiling every Monday night.</p>
+            <p class="lede">Vice City's hottest creators. One stage. Every Monday night. The only question is how much you're tipping.</p>
             <div class="hero-ctas">
-              <a class="btn btn-primary" href="#buy">Get $PEEK</a>
-              <button class="btn btn-ghost" type="button" data-rain>Make it rain <span aria-hidden="true">💸</span></button>
-            </div>
-
-            <div class="ca" role="group" aria-label="Contract address">
-              <span class="ca-label">CA</span>
-              <code class="ca-value" data-ca>Drops at launch</code>
-              <button class="ca-copy" type="button" data-copy-ca disabled aria-label="Copy contract address">
-                <svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span>
-              </button>
+              <a class="btn btn-primary" href="#lineup">See the Lineup</a>
+              <button class="btn btn-ghost" type="button" data-rain>Hit the stage <span aria-hidden="true">💸</span></button>
             </div>
 
             <div class="countdown">
@@ -138,17 +126,16 @@
           </div>
 
           <div class="hero-art" id="hero-art">
-            <canvas class="hero-3d" id="hero-3d" role="img" aria-label="3D Jack of Hearts card with spinning $PEEK coins"></canvas>
+            <canvas class="hero-3d" id="hero-3d" role="img" aria-label="3D Jack of Hearts card"></canvas>
             <div class="hero-scanlines" aria-hidden="true"></div>
             <p class="hero-3d-hint" aria-hidden="true">Tap the card ♥</p>
-            <!-- CSS poster: shown until the 3D scene is ready, and kept as the fallback (no WebGL / data saver). -->
             <div class="poster" aria-label="Make It Rain Mondays poster, Jack of Hearts" role="img">
               <div class="poster-corner tl" aria-hidden="true"><span>J</span><span>♥</span></div>
               <div class="poster-corner br" aria-hidden="true"><span>J</span><span>♥</span></div>
               <p class="poster-top">Jack of Hearts</p>
               <p class="poster-script">Make it Rain</p>
               <p class="poster-block">Mondays</p>
-              <p class="poster-sub">Doors 10PM · Tips in $PEEK</p>
+              <p class="poster-sub">Doors 10PM · Tips in Peek Cash</p>
               <div class="poster-foot"><svg aria-hidden="true"><use href="#i-heart-key"/></svg><span>Find us on Peekhole</span></div>
             </div>
           </div>
@@ -160,23 +147,23 @@
         <div class="wrap">
           <p class="kicker">You found the club</p>
           <h2 class="h2 reveal">Where Leonida's creators get paid.</h2>
-          <p class="section-lede reveal">Peekhole is where Vice City's favorite creators keep their fans close. Jack of Hearts is where they keep them closer. Every Monday the two team up: the DJ calls it, the lights drop, and the whole room makes it rain. $PEEK is that money, minus the paper cuts.</p>
+          <p class="section-lede reveal">Peekhole is the platform. Jack of Hearts is the Monday night event. Every week the DJ calls it, the lights drop, and the whole room makes it rain in Peek Cash.</p>
 
           <div class="cards-3">
             <article class="feature tilt reveal">
               <span class="feature-icon" aria-hidden="true">♥</span>
               <h3>Tip without the paper</h3>
-              <p>Send $PEEK to anyone with a Solana wallet in seconds. No card on file, nothing weird on your bank statement.</p>
+              <p>Peek Cash hits creators in seconds. No card on file, no awkward bank statement, no middle man between you and the stage.</p>
             </article>
             <article class="feature tilt reveal">
               <span class="feature-icon" aria-hidden="true">☾</span>
               <h3>Make It Rain Mondays</h3>
-              <p>Every Monday at 10PM Vice City time the holders show up together. Memes up, posters out, chart under the lights.</p>
+              <p>10 PM Vice City time. The regulars show up, the creators go live, and the whole room tips at once. It's a Monday ritual.</p>
             </article>
             <article class="feature tilt reveal">
               <span class="feature-icon" aria-hidden="true">✦</span>
-              <h3>Velvet rope</h3>
-              <p>The Telegram is the VIP room. Strict bouncer: no scams, no fake "support", and admins never DM first.</p>
+              <h3>VIP room</h3>
+              <p>The VIP group chat is behind the velvet rope. Strict bouncer policy: no scams, no fake "management," and staff never contacts you outside the app.</p>
             </article>
           </div>
         </div>
@@ -191,7 +178,7 @@
               <p class="kicker">Tonight on the main stage</p>
               <h2 class="h2">The lineup</h2>
             </div>
-            <p class="muted section-note">Characters are fictional. Tips are animated. Hearts are real.</p>
+            <p class="muted section-note">Schedule subject to change. Follow @peekhole on Bleeter for updates.</p>
           </div>
 
           <div class="lineup">
@@ -199,12 +186,12 @@
               <div class="creator-art c1">
                 <span class="creator-badge">Headliner</span>
                 <img class="creator-photo" src="assets/lineup/cherry-vice.svg" width="400" height="440" loading="lazy" decoding="async" alt="Illustrated portrait of Cherry Vice: big cherry-red curls, heart-shaped sunglasses, gold hoops and a white faux-fur stole.">
-                <span class="creator-lock">🔒 Peekhole exclusive</span>
+                <span class="creator-lock">🔒 Members only</span>
               </div>
               <div class="creator-body">
                 <h3>Cherry Vice</h3>
                 <p class="creator-handle">@cherryvice · Main stage</p>
-                <p>Mondays only. Don't ask for a refund.</p>
+                <p>Walks on at 10, owns the room by 10:01. Mondays only — don't ask for a refund.</p>
                 <button class="btn btn-ghost btn-sm" type="button" data-rain>Make it rain</button>
               </div>
             </article>
@@ -212,12 +199,12 @@
               <div class="creator-art c2">
                 <span class="creator-badge">Leonida Keys</span>
                 <img class="creator-photo" src="assets/lineup/roxy-keys.svg" width="400" height="440" loading="lazy" decoding="async" alt="Illustrated portrait of Roxy Keys: long blonde hair, aviators pushed up, teal palm-print shirt against a Keys sunset.">
-                <span class="creator-lock">🔒 Peekhole exclusive</span>
+                <span class="creator-lock">🔒 Members only</span>
               </div>
               <div class="creator-body">
                 <h3>Roxy Keys</h3>
                 <p class="creator-handle">@roxykeys · Stage two</p>
-                <p>Born on the Keys, raised on the pole. Sunsets are free, the rest is in $PEEK.</p>
+                <p>Born on the Keys, raised on the shoreline. Sunsets are free — the rest costs Peek Cash.</p>
                 <button class="btn btn-ghost btn-sm" type="button" data-rain>Make it rain</button>
               </div>
             </article>
@@ -225,12 +212,12 @@
               <div class="creator-art c3">
                 <span class="creator-badge">Late set</span>
                 <img class="creator-photo" src="assets/lineup/neon-nina.svg" width="400" height="440" loading="lazy" decoding="async" alt="Illustrated portrait of Neon Nina: violet bob with a cyan streak, gold hoops and a holographic bomber jacket under a neon ring.">
-                <span class="creator-lock">🔒 Peekhole exclusive</span>
+                <span class="creator-lock">🔒 Members only</span>
               </div>
               <div class="creator-body">
                 <h3>Neon Nina</h3>
                 <p class="creator-handle">@neonnina · After midnight</p>
-                <p>Lights go purple, Nina goes up. Ask the DJ, not her.</p>
+                <p>When the lights go violet, that's her cue. Don't ask when — ask the DJ.</p>
                 <button class="btn btn-ghost btn-sm" type="button" data-rain>Make it rain</button>
               </div>
             </article>
@@ -238,12 +225,12 @@
               <div class="creator-art c4">
                 <span class="creator-badge">VIP room</span>
                 <img class="creator-photo" src="assets/lineup/lady-luck.svg" width="400" height="440" loading="lazy" decoding="async" alt="Illustrated portrait of Lady Luck: sleek black ponytail, red lips, pearls and a black blazer with gold lapels.">
-                <span class="creator-lock">🔒 Peekhole exclusive</span>
+                <span class="creator-lock">🔒 VIP only</span>
               </div>
               <div class="creator-body">
                 <h3>Lady Luck</h3>
                 <p class="creator-handle">@ladyluck · Back booth</p>
-                <p>She's the reason the house always wins.</p>
+                <p>The reason the house always wins. VIP booth, pearls, no eye contact unless you're tipping.</p>
                 <button class="btn btn-ghost btn-sm" type="button" data-rain>Make it rain</button>
               </div>
             </article>
@@ -259,151 +246,118 @@
           <div>
             <p class="kicker">Read before you walk in</p>
             <h2 class="h2">House rules</h2>
-            <p class="section-lede">Every club has them. Ours are mostly about your wallet.</p>
+            <p class="section-lede">Every club has them. Ours keep the lights on and the creators safe.</p>
           </div>
           <ol class="rules reveal">
-            <li><p><b>Look, don't touch.</b> Not the dancers, not your seed phrase.</p></li>
-            <li><p><b>Tip the stage, not the floor.</b> Only use the contract address on this page.</p></li>
-            <li><p><b>The bouncer never DMs first.</b> Anyone who does is not staff.</p></li>
-            <li><p><b>Mondays are sacred.</b> 10PM, Vice City time. Be there.</p></li>
-            <li><p><b>Paper hands leave through the back.</b> No refunds at the bar.</p></li>
+            <li><p><b>Respect the talent.</b> They're on stage for you. Act like you deserve to be in the room.</p></li>
+            <li><p><b>Peek Cash only.</b> No IOUs, no promises, no funny money. If it's not Peek Cash, it's not a tip.</p></li>
+            <li><p><b>Staff never leaves the building.</b> Anyone outside the club claiming to represent Peekhole management is lying. Real staff wear the heart pin and never contact you off-premises.</p></li>
+            <li><p><b>Mondays are sacred.</b> 10 PM. Vice City time. No excuses, no rain checks.</p></li>
+            <li><p><b>What happens in VIP stays in VIP.</b> No screenshots, no recordings, no sharing what you saw in the back room.</p></li>
           </ol>
         </div>
       </section>
       <div class="section-divider" aria-hidden="true"></div>
 
-      <!-- TOKEN -->
+      <!-- HOW IT WORKS -->
       <section class="section section-alt" id="token">
         <div class="wrap">
-          <div class="section-head">
-            <div>
-              <p class="kicker">The house currency</p>
-              <h2 class="h2">$PEEK</h2>
-            </div>
-            <span class="status" id="status" data-state="prelaunch" role="status">
-              <span class="status-dot" aria-hidden="true"></span><span id="status-text">Pre-launch</span>
-            </span>
-          </div>
+          <p class="kicker">How it works</p>
+          <h2 class="h2 reveal">Three moves. That's all it takes.</h2>
+          <p class="section-lede reveal">No cash at the door. No cards on file. At Peekhole, every tip hits the stage in Peek Cash — the in-app credits that keep the lights on and the creators performing.</p>
 
-          <div class="token-grid">
-            <div class="stats">
-              <div class="stat">
-                <span class="stat-label">Price</span>
-                <span class="stat-value" data-f="price">—</span>
-                <span class="stat-delta" data-f="change">—</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Market cap</span>
-                <span class="stat-value" data-f="mcap">—</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Liquidity</span>
-                <span class="stat-value" data-f="liq">—</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Volume 24h</span>
-                <span class="stat-value" data-f="vol">—</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Txns 24h</span>
-                <span class="stat-value"><span class="up" data-f="buys">—</span><span class="stat-sep">/</span><span class="down" data-f="sells">—</span></span>
-                <span class="stat-sub">buys / sells</span>
-              </div>
-              <div class="stat">
-                <span class="stat-label">Updated</span>
-                <span class="stat-value stat-small" data-f="updated">—</span>
-                <span class="stat-sub">via DexScreener</span>
-              </div>
-            </div>
-
-            <div class="chart" id="chart">
-              <div class="chart-empty" id="chart-empty">
-                <svg aria-hidden="true"><use href="#i-heart-key"/></svg>
-                <p>The chart goes live when the doors open.</p>
-              </div>
-            </div>
-          </div>
-
-          <div class="token-meta">
-            <dl class="facts" id="facts"></dl>
-            <div class="ca ca-wide" role="group" aria-label="Contract address">
-              <span class="ca-label">CA</span>
-              <code class="ca-value" data-ca>Drops at launch</code>
-              <button class="ca-copy" type="button" data-copy-ca disabled aria-label="Copy contract address">
-                <svg aria-hidden="true"><use href="#i-copy"/></svg><span>Copy</span>
-              </button>
-            </div>
+          <div class="cards-3">
+            <article class="feature tilt reveal">
+              <span class="feature-icon" aria-hidden="true">👀</span>
+              <h3>Browse</h3>
+              <p>Scroll the lineup, check the schedule, find out who's on stage tonight. New creators rotate in every Monday.</p>
+            </article>
+            <article class="feature tilt reveal">
+              <span class="feature-icon" aria-hidden="true">💸</span>
+              <h3>Tip</h3>
+              <p>Send Peek Cash straight to the performer. They see it land before the song ends. The bigger the tip, the louder the room gets.</p>
+            </article>
+            <article class="feature tilt reveal">
+              <span class="feature-icon" aria-hidden="true">✦</span>
+              <h3>Go VIP</h3>
+              <p>Top tippers unlock the back room. Private shows, exclusive content, and first pick on Monday nights. The velvet rope opens for generosity.</p>
+            </article>
           </div>
         </div>
       </section>
       <div class="section-divider" aria-hidden="true"></div>
 
-      <!-- HOW TO BUY -->
+      <!-- JOIN THE CLUB -->
       <section class="section" id="buy">
         <div class="wrap">
-          <p class="kicker">Get on the list</p>
-          <h2 class="h2">How to buy $PEEK</h2>
+          <p class="kicker">First time at the club?</p>
+          <h2 class="h2">Join the club</h2>
 
           <ol class="steps">
             <li class="step tilt reveal">
               <span class="step-n">01</span>
-              <h3>Get a wallet</h3>
-              <p>Download Phantom or Solflare from the official app store. Write the recovery phrase on paper. Never type it into a website.</p>
+              <h3>Sign up</h3>
+              <p>Create your Peekhole profile in 30 seconds. Pick a name the creators will remember — or don't. Anonymous tips hit just as hard.</p>
             </li>
             <li class="step tilt reveal">
               <span class="step-n">02</span>
-              <h3>Load some SOL</h3>
-              <p>Buy SOL on an exchange or inside your wallet, then keep a little extra for network fees.</p>
+              <h3>Get Peek Cash</h3>
+              <p>Load credits in the app. Think of it as your bar tab — you load up, you tip, the creators cash out. Simple as that.</p>
             </li>
             <li class="step tilt reveal">
               <span class="step-n">03</span>
-              <h3>Swap for $PEEK</h3>
-              <p>Open Jupiter, paste the contract address from this page, and swap. Check the address every time.</p>
+              <h3>Pick a creator</h3>
+              <p>Browse the lineup and find your favorite. Everyone's got a type — Cherry for the bold, Roxy for the sun-kissed, Nina for the late-night crowd.</p>
             </li>
             <li class="step tilt reveal">
               <span class="step-n">04</span>
               <h3>Make it rain</h3>
-              <p>Hold it, tip it, meme it. See you Monday at 10.</p>
+              <p>Send a tip and watch the ceiling light up. Mondays at 10 are when the whole room goes off — but the stage is open all week.</p>
             </li>
           </ol>
 
-          <div class="buy-actions">
-            <a class="btn btn-primary" data-link="swap" aria-disabled="true" rel="noopener noreferrer" target="_blank">Swap on Jupiter</a>
-            <a class="btn btn-ghost" data-link="chart" aria-disabled="true" rel="noopener noreferrer" target="_blank">
-              <svg class="btn-icon" aria-hidden="true"><use href="#i-chart"/></svg>DexScreener
-            </a>
-            <a class="btn btn-ghost" data-link="explorer" aria-disabled="true" rel="noopener noreferrer" target="_blank">Solscan</a>
-          </div>
+          <form class="signup-form" id="signup-form" autocomplete="off">
+            <div class="signup-row">
+              <input class="signup-input" type="email" placeholder="Your email" required aria-label="Email address">
+              <button class="btn btn-primary signup-btn" type="submit">Get Early Access</button>
+            </div>
+            <p class="signup-fine">We'll notify you when the iFruit app drops. No spam — the bouncer handles that.</p>
+            <p class="signup-ok" id="signup-ok" hidden>You're on the list. See you Monday. &#9829;</p>
+          </form>
 
           <div class="callout reveal">
             <svg aria-hidden="true"><use href="#i-shield"/></svg>
-            <p><b>Copycats use the same name and ticker.</b> Anyone can make a token called Peekhole. Only one has the address shown on this page. If someone sends you a different one, it's not us.</p>
+            <p><b>Coming soon to iFruit.</b> The official Peekhole app launches exclusively on iFruit. Staff never contacts you outside the app — if someone claims to, they're not with us. Download only from the official iFruit store.</p>
           </div>
         </div>
       </section>
       <div class="section-divider" aria-hidden="true"></div>
 
-      <!-- THE NIGHT (roadmap) -->
+      <!-- TONIGHT -->
       <section class="section section-alt" id="night">
         <div class="wrap">
-          <p class="kicker">Roadmap, club style</p>
-          <h2 class="h2">The night</h2>
+          <p class="kicker">Every Monday night</p>
+          <h2 class="h2">How the night goes</h2>
           <ol class="night">
             <li class="reveal">
               <span class="night-time">10:00 PM</span>
-              <div><h3>Doors open</h3><p>$PEEK launches on Solana. The contract address goes up on this page, and only on this page.</p></div>
+              <div><h3>Doors open</h3><p>The bouncer checks you in. Grab a drink, load up some Peek Cash, and find a spot near the stage.</p></div>
             </li>
             <li class="reveal">
               <span class="night-time">11:00 PM</span>
-              <div><h3>Main stage</h3><p>The first Make It Rain Monday. Community raids, memes, and posters going up around town.</p></div>
+              <div><h3>Main stage</h3><p>First creator hits the floor. Tips start flying. The DJ calls "Make It Rain" and the ceiling lights up.</p></div>
             </li>
             <li class="reveal">
               <span class="night-time">12:00 AM</span>
-              <div><h3>Lights down</h3><p>Socials verified on DexScreener, the holder Telegram opens, and the Monday ritual becomes a habit.</p></div>
+              <div><h3>Rotation</h3><p>New creator, new set. The VIP lounge opens for top tippers. The rest of you — keep tipping.</p></div>
             </li>
             <li class="reveal">
               <span class="night-time">2:00 AM</span>
-              <div><h3>Last call</h3><p>Release week in Leonida. The biggest Monday of the year. We'll be at the bar.</p></div>
+              <div><h3>Last call</h3><p>Final set of the night. Biggest tips happen here. If you've been saving your Peek Cash — now's the time.</p></div>
+            </li>
+            <li class="reveal">
+              <span class="night-time">4:00 AM</span>
+              <div><h3>After hours</h3><p>Lights come up, but the VIP room stays open. See you next Monday — same time, same stage.</p></div>
             </li>
           </ol>
         </div>
@@ -420,27 +374,31 @@
           <div class="faq">
             <details>
               <summary>What is Peekhole?</summary>
-              <p>In Leonida, Peekhole is where creators get paid by the fans who can't stop peeking. Out here, it's a fan-made meme coin and community inspired by the GTA VI trailer, specifically the Make It Rain Mondays poster on the club wall.</p>
+              <p>Vice City's premiere creator tipping platform. Every Monday night at Jack of Hearts, the DJ drops the lights, the creators take the stage, and the crowd makes it rain in Peek Cash. Think of it as the intersection of a nightclub and a tip jar — only louder, and with better lighting.</p>
             </details>
             <details>
-              <summary>Is this an official Rockstar project?</summary>
-              <p>No. Peekhole is an independent fan project. It is not affiliated with, endorsed by, or connected to Rockstar Games, Take-Two Interactive, or anyone who works on GTA VI.</p>
+              <summary>What is Peek Cash?</summary>
+              <p>It's the currency used on Peekhole — think of it as chips at the casino. You load up through Maze Bank, you tip, the creators cash out. It's the only way to make it rain at Jack of Hearts.</p>
             </details>
             <details>
-              <summary>Can I use $PEEK inside GTA VI?</summary>
-              <p>No. $PEEK is a meme coin on Solana with no utility in GTA VI or any other game. The club, the dancers and Vice City are fiction. The coin is real, and its price moves.</p>
+              <summary>How do Make It Rain Mondays work?</summary>
+              <p>Every Monday at 10 PM Vice City time, the DJ calls it. The lights drop, the creators take the stage, and everyone tips at once. The whole room lights up. It's a weekly ritual — miss one and you'll hear about it.</p>
             </details>
             <details>
-              <summary>Where does the QR code go?</summary>
-              <p>The QR codes on Peekhole posters point to this page. The poster in the official trailer belongs to Rockstar, and its QR code goes to Rockstar's own site.</p>
+              <summary>Where is Jack of Hearts?</summary>
+              <p>1987 Ocean Drive, Vice Beach, Leonida. Look for the heart-shaped neon sign above the door. If you found the QR code, you already know where to look.</p>
             </details>
             <details>
-              <summary>How do I avoid fake $PEEK tokens?</summary>
-              <p>Copy the contract address from this page only. Admins never DM first, never ask for your recovery phrase, and never offer to "sync" or "validate" your wallet.</p>
+              <summary>Can I become a creator?</summary>
+              <p>Auditions every Thursday night. Bring your stage name, your moves, and an iFruit device. No previous experience required — but it helps. Ask for Dani at the bar.</p>
             </details>
             <details>
-              <summary>Is this financial advice?</summary>
-              <p>No. $PEEK has no intrinsic value and no promise of returns. Meme coins can go to zero. Only spend what you'd happily throw at a stage.</p>
+              <summary>Is my account private?</summary>
+              <p>Your Peekhole profile is anonymous by default. Creators see your display name, not your Maze Bank details. What happens at Jack of Hearts stays at Jack of Hearts.</p>
+            </details>
+            <details>
+              <summary>How do I get in?</summary>
+              <p>Walk in any Monday after 10. The bouncer checks your age, not your net worth. VIP access is earned — top tippers get the invite. Reservations: 555-PEEK.</p>
             </details>
           </div>
         </div>
@@ -455,23 +413,31 @@
             <span class="brand-word">Peek<span>hole</span></span>
           </a>
           <p class="muted">Make It Rain Mondays · Jack of Hearts · Vice City, Leonida</p>
+          <p class="muted footer-location">1987 Ocean Drive &middot; Vice Beach &middot; Leonida</p>
+          <p class="muted">Reservations: 555-PEEK &middot; Payments processed by Maze Bank Digital</p>
+          <p class="muted">You don't have to go home, but you can't stay here. See you Monday.</p>
           <div class="socials">
-            <a class="social" data-social="x" hidden rel="noopener noreferrer" target="_blank" aria-label="Peekhole on X"><svg aria-hidden="true"><use href="#i-x"/></svg></a>
-            <a class="social" data-social="telegram" hidden rel="noopener noreferrer" target="_blank" aria-label="Peekhole on Telegram"><svg aria-hidden="true"><use href="#i-send"/></svg></a>
-            <a class="social" data-link="chart" aria-disabled="true" rel="noopener noreferrer" target="_blank" aria-label="$PEEK on DexScreener"><svg aria-hidden="true"><use href="#i-chart"/></svg></a>
+            <a class="social" data-social="x" hidden rel="noopener noreferrer" target="_blank" aria-label="Peekhole on Bleeter"><svg aria-hidden="true"><use href="#i-x"/></svg></a>
+            <a class="social" data-social="telegram" hidden rel="noopener noreferrer" target="_blank" aria-label="Join the VIP Lounge"><svg aria-hidden="true"><use href="#i-send"/></svg></a>
           </div>
         </div>
-        <p class="legal">Peekhole is an independent, fan-made parody project. It is not affiliated with, endorsed by, or connected to Rockstar Games or Take-Two Interactive. Grand Theft Auto and GTA are trademarks of Take-Two Interactive Software, Inc. $PEEK is a meme coin with no intrinsic value, no expectation of financial return, and no utility in any video game. Crypto assets are volatile and can lose all of their value. Nothing on this site is financial advice. 18+ only.</p>
+        <p class="legal">Peekhole Entertainment&trade; &middot; Vice City, Leonida &middot; This is a fan-made creative project and interactive experience. Not affiliated with or endorsed by any game publisher. All characters and locations are fictional. For entertainment purposes only. 18+</p>
       </div>
       <div class="footer-deco" aria-hidden="true"></div>
       <div class="wrap footer-bottom">
-        <span>© <span data-year>2026</span> Peekhole</span>
-        <span>18+ · Not financial advice</span>
+        <span>&copy; <span data-year>2026</span> Peekhole Entertainment &middot; Vice City</span>
+        <span class="footer-links">
+          <a href="terms.html">Terms</a>
+          <a href="privacy.html">Privacy</a>
+          <a href="guidelines.html">Guidelines</a>
+        </span>
+        <span>18+ &middot; careers@peekhole.vc</span>
       </div>
     </footer>
   </div>
 
   <canvas class="rain" id="rain" aria-hidden="true"></canvas>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
+  <script src="js/signup.js"></script>
 </body>
 </html>

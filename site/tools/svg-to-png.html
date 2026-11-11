@@ -1,0 +1,262 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>OG Card - SVG to PNG Converter</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #0c0614;
+      color: #d0c0e0;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      font-size: 24px;
+      font-weight: 300;
+      letter-spacing: 4px;
+      margin-bottom: 8px;
+      color: #ff1493;
+    }
+
+    .subtitle {
+      font-size: 14px;
+      color: #a090b0;
+      margin-bottom: 32px;
+    }
+
+    .preview-container {
+      width: 100%;
+      max-width: 900px;
+      background: #110a1c;
+      border: 1px solid rgba(255, 20, 147, 0.15);
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 24px;
+    }
+
+    .preview-label {
+      font-size: 12px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: #00d4aa;
+      margin-bottom: 12px;
+    }
+
+    #preview {
+      width: 100%;
+      border-radius: 4px;
+      display: block;
+    }
+
+    .actions {
+      display: flex;
+      gap: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+      margin-bottom: 24px;
+    }
+
+    button {
+      background: linear-gradient(160deg, #ff1493, #5b0f9e);
+      color: #fff;
+      border: none;
+      padding: 14px 32px;
+      font-size: 16px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:hover { opacity: 0.9; }
+    button:active { transform: scale(0.98); }
+
+    button.secondary {
+      background: linear-gradient(160deg, #00d4aa, #0a7060);
+    }
+
+    .info {
+      font-size: 13px;
+      color: #706080;
+      text-align: center;
+      max-width: 600px;
+      line-height: 1.6;
+    }
+
+    .info code {
+      background: rgba(255, 20, 147, 0.1);
+      padding: 2px 6px;
+      border-radius: 3px;
+      color: #f0a030;
+      font-size: 12px;
+    }
+
+    .size-options {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      margin-bottom: 16px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .size-options label {
+      font-size: 13px;
+      color: #a090b0;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .size-options input[type="radio"] {
+      accent-color: #ff1493;
+    }
+
+    #status {
+      margin-top: 16px;
+      font-size: 14px;
+      color: #00d4aa;
+      min-height: 20px;
+    }
+
+    canvas { display: none; }
+  </style>
+</head>
+<body>
+  <h1>PEEKHOLE OG CARD</h1>
+  <p class="subtitle">SVG to PNG converter for social sharing</p>
+
+  <div class="preview-container">
+    <div class="preview-label">Preview</div>
+    <img id="preview" alt="OG Card Preview">
+  </div>
+
+  <div class="size-options">
+    <label>
+      <input type="radio" name="scale" value="1" checked> 1x (1200 x 630)
+    </label>
+    <label>
+      <input type="radio" name="scale" value="2"> 2x (2400 x 1260)
+    </label>
+  </div>
+
+  <div class="actions">
+    <button onclick="downloadPNG()">Download PNG</button>
+    <button class="secondary" onclick="downloadJPG()">Download JPG</button>
+  </div>
+
+  <p id="status"></p>
+
+  <p class="info">
+    Load the SVG from <code>../assets/og-card.svg</code> and export it as a raster image
+    suitable for Open Graph / Twitter Card meta tags. Most platforms require PNG or JPG.
+    Use the 2x option for higher-DPI clarity on Retina displays.
+  </p>
+
+  <canvas id="canvas"></canvas>
+
+  <script>
+    const SVG_PATH = '../assets/og-card.svg';
+    const W = 1200;
+    const H = 630;
+
+    const preview = document.getElementById('preview');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+    const status = document.getElementById('status');
+
+    // Load SVG into preview
+    preview.src = SVG_PATH;
+
+    function getScale() {
+      const checked = document.querySelector('input[name="scale"]:checked');
+      return checked ? parseInt(checked.value, 10) : 1;
+    }
+
+    function renderToCanvas() {
+      return new Promise((resolve, reject) => {
+        const scale = getScale();
+        canvas.width = W * scale;
+        canvas.height = H * scale;
+
+        const img = new Image();
+        img.crossOrigin = 'anonymous';
+
+        img.onload = () => {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          // Draw a solid background first (SVG transparency fallback)
+          ctx.fillStyle = '#0c0614';
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+          resolve();
+        };
+
+        img.onerror = () => {
+          reject(new Error('Failed to load SVG. Make sure you are serving this page from a local server (not file://).'));
+        };
+
+        // Load SVG via fetch to inline it as a data URI (avoids CORS/taint issues)
+        fetch(SVG_PATH)
+          .then(r => r.text())
+          .then(svgText => {
+            const blob = new Blob([svgText], { type: 'image/svg+xml;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            img.src = url;
+          })
+          .catch(() => {
+            // Fallback: try loading directly
+            img.src = SVG_PATH;
+          });
+      });
+    }
+
+    function download(filename, mimeType, quality) {
+      status.textContent = 'Rendering...';
+
+      renderToCanvas()
+        .then(() => {
+          const scale = getScale();
+          const suffix = scale > 1 ? `@${scale}x` : '';
+          const ext = mimeType === 'image/jpeg' ? 'jpg' : 'png';
+          const name = filename || `peekhole-og${suffix}.${ext}`;
+
+          const dataURL = canvas.toDataURL(mimeType, quality);
+          const link = document.createElement('a');
+          link.download = name;
+          link.href = dataURL;
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+
+          const kb = Math.round(dataURL.length * 0.75 / 1024);
+          status.textContent = `Downloaded ${name} (~${kb} KB)`;
+        })
+        .catch(err => {
+          status.textContent = err.message;
+        });
+    }
+
+    function downloadPNG() {
+      const scale = getScale();
+      const suffix = scale > 1 ? `@${scale}x` : '';
+      download(`peekhole-og${suffix}.png`, 'image/png');
+    }
+
+    function downloadJPG() {
+      const scale = getScale();
+      const suffix = scale > 1 ? `@${scale}x` : '';
+      download(`peekhole-og${suffix}.jpg`, 'image/jpeg', 0.92);
+    }
+  </script>
+</body>
+</html>

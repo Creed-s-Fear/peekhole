@@ -1,27 +1,17 @@
-// Peekhole front-end. No dependencies, no build step.
-// Security: every value coming from the network is written with textContent (never innerHTML),
-// numbers are validated with Number.isFinite, and addresses must match base58 before they are
-// put into any URL or iframe src.
-
 import { CONFIG } from './config.js';
 
 const $ = (sel, root = document) => root.querySelector(sel);
 const $$ = (sel, root = document) => Array.from(root.querySelectorAll(sel));
 
-const BASE58 = /^[1-9A-HJ-NP-Za-km-z]{32,44}$/;
 const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
 
 const session = {
   set(key, value) {
-    try { sessionStorage.setItem(key, value); } catch { /* storage unavailable: ignore */ }
+    try { sessionStorage.setItem(key, value); } catch { /* private mode */ }
   },
 };
 
-const CA = String(CONFIG.token.contractAddress || '').trim();
-const HAS_CA = BASE58.test(CA);
-if (CA && !HAS_CA) console.warn('[Peekhole] contractAddress is not a valid Solana address — staying in pre-launch mode.');
-
-/* ------------------------------------------------------------------ toast */
+/* toast */
 let toastTimer = 0;
 function toast(message) {
   const el = $('#toast');
@@ -32,7 +22,7 @@ function toast(message) {
   toastTimer = setTimeout(() => el.classList.remove('show'), 2400);
 }
 
-/* --------------------------------------------------------------- age gate */
+/* age gate */
 function initGate() {
   const root = document.documentElement;
   const gate = $('#gate');
@@ -41,7 +31,6 @@ function initGate() {
   const params = new URLSearchParams(location.search);
   if (params.get('ref') === 'poster') {
     $('#gate-from').hidden = false;
-    // Clean the URL so shared links don't carry the tracking param.
     params.delete('ref');
     const qs = params.toString();
     history.replaceState(null, '', location.pathname + (qs ? `?${qs}` : '') + location.hash);
@@ -59,21 +48,29 @@ function initGate() {
   enter.addEventListener('click', () => {
     session.set('ph_age_ok', '1');
     root.classList.add('age-ok');
+    gate.classList.add('gate-leaving');
     app.inert = false;
-    gate.remove();
-    $('#main').focus({ preventScroll: true });
-    init3D(); // heavy WebGL work only starts once the visitor is actually inside
+    app.classList.add('app-entering');
+    init3D();
+    let cleaned = false;
+    const cleanup = () => {
+      if (cleaned) return;
+      cleaned = true;
+      gate.remove();
+      app.classList.remove('app-entering');
+      $('#main').focus({ preventScroll: true });
+    };
+    gate.addEventListener('transitionend', cleanup, { once: true });
+    setTimeout(cleanup, 450);
   }, { once: true });
 }
 
-/* -------------------------------------------------------------- hero 3D */
-// three.js is code-split: fetched only here, after the gate, when the browser is idle.
-// Skipped on data-saver connections; the CSS poster stays as the fallback on any failure.
+/* hero 3D */
 function init3D() {
   const container = $('#hero-art');
   const canvas = $('#hero-3d');
   if (!container || !canvas) return;
-  if (navigator.connection?.saveData) return;
+  if (window.innerWidth < 768 || navigator.connection?.saveData) return;
 
   const start = () => {
     import('./scene3d.js')
@@ -86,16 +83,12 @@ function init3D() {
   initLineup3D();
 }
 
-/* ------------------------------------------------------------ lineup 3D busts */
-// Photos from config first; the optional 3D busts (config.lineup3d) are imported only when the
-// lineup gets close to the viewport. SVG illustrations are the default and the fallback.
+/* lineup */
 function initLineup3D() {
   const section = $('#lineup');
   if (!section) return;
   const cards = $$('.creator', section);
 
-  // Optional real images (config.lineup, same order as the cards). Only local files under
-  // assets/ are accepted, so config can never point the page at a third-party host.
   const LOCAL_IMAGE = /^assets\/[\w\-./]+\.(?:webp|avif|jpe?g|png)$/i;
   cards.forEach((card, i) => {
     const entry = CONFIG.lineup?.[i];
@@ -108,7 +101,7 @@ function initLineup3D() {
     card.dataset.photo = '1';
   });
   if (!CONFIG.lineup3d || !('IntersectionObserver' in window)) return;
-  if (cards.every((card) => card.dataset.photo)) return; // nothing left for WebGL to draw
+  if (cards.every((card) => card.dataset.photo)) return;
 
   const io = new IntersectionObserver((entries) => {
     if (!entries.some((e) => e.isIntersecting)) return;
@@ -120,11 +113,11 @@ function initLineup3D() {
   io.observe(section);
 }
 
-/* ------------------------------------------------------------ 3D tilt cards */
+/* tilt cards */
 function initTilt() {
   const fine = window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   if (!fine || reducedMotion.matches) return;
-  const MAX = 9; // degrees
+  const MAX = 9;
   let active = null;
   let lastEvent = null;
   let frame = 0;
@@ -152,7 +145,7 @@ function initTilt() {
     active = el;
     if (!el) return;
     lastEvent = e;
-    if (!frame) frame = requestAnimationFrame(apply); // at most one layout read per frame
+    if (!frame) frame = requestAnimationFrame(apply);
   }, { passive: true });
   document.documentElement.addEventListener('pointerleave', () => {
     if (active) reset(active);
@@ -160,7 +153,7 @@ function initTilt() {
   });
 }
 
-/* -------------------------------------------------------------- nav (mobile) */
+/* nav */
 function initNav() {
   const nav = $('#nav');
   const btn = $('#nav-toggle');
@@ -176,12 +169,45 @@ function initNav() {
   });
 }
 
-/* ------------------------------------------------------- static config bits */
-function safeHttpsUrl(template) {
-  if (typeof template !== 'string' || !template) return null;
-  const href = template.replaceAll('{ca}', encodeURIComponent(CA));
+/* header scroll */
+function initHeaderScroll() {
+  const header = $('header');
+  if (!header) return;
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      header.classList.toggle('header-scrolled', window.scrollY > 40);
+      ticking = false;
+    });
+  };
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+}
+
+/* nav highlight */
+function initNavHighlight() {
+  $$('#nav a[href^="#"]').forEach((link) => {
+    link.addEventListener('click', () => {
+      const id = link.getAttribute('href')?.slice(1);
+      if (!id) return;
+      const target = document.getElementById(id);
+      if (!target) return;
+      const heading = target.querySelector('h2, h3') || target;
+      setTimeout(() => {
+        heading.classList.add('section-highlight');
+        setTimeout(() => heading.classList.remove('section-highlight'), 800);
+      }, 500);
+    });
+  });
+}
+
+/* config */
+function safeHttpsUrl(raw) {
+  if (typeof raw !== 'string' || !raw) return null;
   try {
-    const url = new URL(href);
+    const url = new URL(raw);
     return url.protocol === 'https:' ? url.href : null;
   } catch {
     return null;
@@ -189,236 +215,29 @@ function safeHttpsUrl(template) {
 }
 
 function initConfigBits() {
-  // Contract address
-  $$('[data-ca]').forEach((el) => { el.textContent = HAS_CA ? CA : 'Drops at launch'; });
-  $$('[data-copy-ca]').forEach((btn) => {
-    btn.disabled = !HAS_CA;
-    btn.addEventListener('click', () => copyCA(btn));
-  });
-
-  // Buy / chart / explorer links: only enabled once the CA is valid
-  $$('[data-link]').forEach((a) => {
-    const href = HAS_CA ? safeHttpsUrl(CONFIG.links[a.dataset.link]) : null;
-    if (href) {
-      a.href = href;
-      a.removeAttribute('aria-disabled');
-    } else {
-      a.removeAttribute('href');
-      a.setAttribute('aria-disabled', 'true');
-    }
-  });
-
-  // Socials: hidden unless configured with a valid https URL
   $$('[data-social]').forEach((a) => {
     const href = safeHttpsUrl(CONFIG.socials[a.dataset.social]);
     if (href) { a.href = href; a.hidden = false; }
   });
 
-  // Token facts
-  const dl = $('#facts');
-  for (const [term, value] of CONFIG.token.facts) {
-    const row = document.createElement('div');
-    const dt = document.createElement('dt');
-    const dd = document.createElement('dd');
-    dt.textContent = term;
-    dd.textContent = value;
-    row.append(dt, dd);
-    dl.append(row);
-  }
-
   $$('[data-year]').forEach((el) => { el.textContent = String(new Date().getFullYear()); });
 }
 
-async function copyCA(btn) {
-  if (!HAS_CA) return;
-  try {
-    await navigator.clipboard.writeText(CA);
-    toast('Contract address copied ♥');
-    const label = btn.querySelector('span');
-    btn.classList.add('copied');
-    if (label) label.textContent = 'Copied';
-    setTimeout(() => {
-      btn.classList.remove('copied');
-      if (label) label.textContent = 'Copy';
-    }, 1600);
-  } catch {
-    toast('Copy failed — select the address and copy it manually');
-  }
-}
-
-/* ---------------------------------------------------------------- ticker */
+/* ticker */
 function initTicker() {
   const track = $('#ticker-track');
+  if (!track) return;
   const group = track.firstElementChild;
-  // Second copy makes the -50% marquee loop seamless.
   const clone = group.cloneNode(true);
   clone.setAttribute('aria-hidden', 'true');
   track.append(clone);
 }
 
-/* ----------------------------------------------------------- formatting */
-const usdCompact = new Intl.NumberFormat('en-US', {
-  style: 'currency', currency: 'USD', notation: 'compact', maximumFractionDigits: 2,
-});
-const intFmt = new Intl.NumberFormat('en-US');
-const SUBSCRIPT = '₀₁₂₃₄₅₆₇₈₉';
-
-const num = (v) => {
-  const n = typeof v === 'number' ? v : Number.parseFloat(v);
-  return Number.isFinite(n) ? n : NaN;
-};
-
-// DexScreener-style price: $0.0₄1234 means 0.00001234 (subscript = number of zeros).
-function fmtPrice(p) {
-  if (!Number.isFinite(p) || p <= 0) return '—';
-  if (p >= 1) return `$${p.toLocaleString('en-US', { maximumFractionDigits: 4 })}`;
-  if (p >= 0.001) return `$${p.toFixed(6).replace(/0+$/, '').replace(/\.$/, '')}`;
-  let zeros = Math.ceil(-Math.log10(p)) - 1;
-  let sig = Math.round(p * 10 ** (zeros + 4));
-  if (sig >= 10000) { zeros -= 1; sig = Math.round(sig / 10); }
-  const digits = String(sig).replace(/0+$/, '') || '0';
-  if (zeros < 4) return `$0.${'0'.repeat(zeros)}${digits}`;
-  const sub = String(zeros).split('').map((d) => SUBSCRIPT[Number(d)]).join('');
-  return `$0.0${sub}${digits}`;
-}
-const fmtUsd = (v) => (Number.isFinite(v) ? usdCompact.format(v) : '—');
-const fmtInt = (v) => (Number.isFinite(v) ? intFmt.format(v) : '—');
-
-function setField(field, text) {
-  $$(`[data-f="${field}"]`).forEach((el) => { el.textContent = text; });
-}
-
-function setStatus(state, text) {
-  const status = $('#status');
-  status.dataset.state = state;
-  $('#status-text').textContent = text;
-  $$('[data-f="state"]').forEach((el) => {
-    el.dataset.state = state;
-    el.textContent = state === 'live' ? 'Live' : text;
-  });
-}
-
-/* ----------------------------------------------------------- market data */
-async function fetchJSON(url, timeoutMs) {
-  const ctrl = new AbortController();
-  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
-  try {
-    const res = await fetch(url, {
-      signal: ctrl.signal,
-      credentials: 'omit',
-      referrerPolicy: 'no-referrer',
-      headers: { Accept: 'application/json' },
-    });
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    return await res.json();
-  } finally {
-    clearTimeout(timer);
-  }
-}
-
-async function loadBestPair() {
-  const chain = encodeURIComponent(CONFIG.token.chain);
-  const data = await fetchJSON(`https://api.dexscreener.com/tokens/v1/${chain}/${CA}`, 8000);
-  const pairs = Array.isArray(data) ? data : Array.isArray(data?.pairs) ? data.pairs : [];
-  // Our token must be the base token; pick the deepest pool.
-  const ours = pairs.filter((p) => p?.baseToken?.address === CA);
-  ours.sort((a, b) => (num(b?.liquidity?.usd) || 0) - (num(a?.liquidity?.usd) || 0));
-  return ours[0] || null;
-}
-
-let chartMounted = false;
-function mountChart(pairAddress) {
-  if (chartMounted || !BASE58.test(pairAddress)) return;
-  chartMounted = true;
-  const chain = encodeURIComponent(CONFIG.token.chain);
-  const params = 'embed=1&loadChartSettings=0&trades=0&tabs=0&info=0&chartLeftToolbar=0&chartTheme=dark&theme=dark&chartStyle=1&chartType=usd&interval=15';
-  const iframe = document.createElement('iframe');
-  iframe.src = `https://dexscreener.com/${chain}/${pairAddress}?${params}`;
-  iframe.title = '$PEEK price chart (DexScreener)';
-  iframe.loading = 'lazy';
-  iframe.referrerPolicy = 'no-referrer';
-  iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups allow-popups-to-escape-sandbox');
-  $('#chart-empty').remove();
-  $('#chart').append(iframe);
-}
-
-function render(pair) {
-  if (!pair) {
-    setStatus('waiting', 'Awaiting liquidity');
-    return;
-  }
-  const price = num(pair.priceUsd);
-  const change = num(pair?.priceChange?.h24);
-  const mcap = num(pair.marketCap ?? pair.fdv);
-  const liq = num(pair?.liquidity?.usd);
-  const vol = num(pair?.volume?.h24);
-  const buys = num(pair?.txns?.h24?.buys);
-  const sells = num(pair?.txns?.h24?.sells);
-
-  setField('price', fmtPrice(price));
-  setField('mcap', fmtUsd(mcap));
-  setField('liq', fmtUsd(liq));
-  setField('vol', fmtUsd(vol));
-  setField('buys', fmtInt(buys));
-  setField('sells', fmtInt(sells));
-  setField('updated', new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' }));
-
-  const changeText = Number.isFinite(change) ? `${change >= 0 ? '▲' : '▼'} ${Math.abs(change).toFixed(2)}%` : '—';
-  $$('[data-f="change"]').forEach((el) => {
-    el.textContent = changeText;
-    el.dataset.dir = !Number.isFinite(change) ? '' : change >= 0 ? 'up' : 'down';
-  });
-
-  setStatus('live', 'Live');
-  mountChart(String(pair.pairAddress || ''));
-}
-
-function initMarket() {
-  if (!HAS_CA) {
-    $('.ticker').dataset.state = 'prelaunch';
-    $$('.ticker [data-f="price"]').forEach((el) => { el.textContent = 'CA drops at launch'; });
-    setStatus('prelaunch', 'Pre-launch');
-    return;
-  }
-
-  const base = Math.max(15_000, Number(CONFIG.refreshMs) || 30_000);
-  let failures = 0;
-  let timer = 0;
-  let inflight = false;
-  let lastOk = 0;
-  let hasData = false;
-
-  async function tick() {
-    clearTimeout(timer);
-    if (inflight) return;
-    if (document.hidden) return; // resumes on visibilitychange — no polling in background tabs
-    inflight = true;
-    try {
-      const pair = await loadBestPair();
-      render(pair);
-      hasData = hasData || Boolean(pair);
-      failures = 0;
-      lastOk = Date.now();
-    } catch {
-      failures += 1;
-      if (hasData) setStatus('stale', 'Reconnecting');
-    } finally {
-      inflight = false;
-    }
-    // Exponential backoff with jitter on failure, capped at 5 minutes.
-    const delay = failures ? Math.min(base * 2 ** failures, 300_000) : base;
-    timer = setTimeout(tick, delay + Math.random() * 2000);
-  }
-
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden && Date.now() - lastOk >= base) tick();
-  });
-  tick();
-}
-
-/* --------------------------------------------------------------- countdown */
+/* countdown */
 function initCountdown() {
   const el = $('#countdown');
+  if (!el) return;
+  el.classList.add('countdown-digits');
   const { weekday, hour, durationHours, timeZone } = CONFIG.event;
   const DAY = 86_400;
   const WEEK = 7 * DAY;
@@ -443,9 +262,11 @@ function initCountdown() {
     if (sinceStart < durationHours * 3600) {
       el.textContent = 'Doors are open';
       el.dataset.live = '1';
+      el.classList.add('countdown-live');
       return;
     }
     el.dataset.live = '';
+    el.classList.remove('countdown-live');
     const left = WEEK - sinceStart;
     const d = Math.floor(left / DAY);
     const h = Math.floor((left % DAY) / 3600);
@@ -458,9 +279,10 @@ function initCountdown() {
   setInterval(() => { if (!document.hidden) update(); }, 1000);
 }
 
-/* -------------------------------------------------------------- make it rain */
+/* make it rain */
 function initRain() {
   const canvas = $('#rain');
+  if (!canvas) return;
   const ctx = canvas.getContext('2d');
   const MAX = 360;
   let particles = [];
@@ -478,7 +300,6 @@ function initRain() {
     canvas.height = Math.round(H * dpr);
   }
 
-  // Pre-render each particle type once; drawImage per frame is far cheaper than paths + text.
   function makeSprite(w, h, paint) {
     const c = document.createElement('canvas');
     c.width = Math.ceil(w * 2);
@@ -554,7 +375,7 @@ function initRain() {
       p.rot += p.vr;
       if (p.y > H + 40) continue;
       next.push(p);
-      const flip = 0.3 + 0.7 * Math.abs(Math.cos(p.sway * 1.4)); // paper flutter
+      const flip = 0.3 + 0.7 * Math.abs(Math.cos(p.sway * 1.4));
       const cos = Math.cos(p.rot) * p.scale * dpr;
       const sin = Math.sin(p.rot) * p.scale * dpr;
       ctx.setTransform(cos, sin, -sin * flip, cos * flip, p.x * dpr, p.y * dpr);
@@ -571,9 +392,27 @@ function initRain() {
     }
   }
 
+  const rainMessages = [
+    '\u{1F4B8} Make it rain!',
+    '\u{1F4B8} The ceiling just got expensive',
+    '\u{1F4B8} Monday energy',
+    '\u{1F4B8} VIP treatment',
+    '\u{1F4B8} That\'s how Vice City tips',
+  ];
+
+  const rainFlash = document.createElement('div');
+  rainFlash.className = 'rain-flash';
+  rainFlash.setAttribute('aria-hidden', 'true');
+  document.body.appendChild(rainFlash);
+
   function makeItRain() {
-    document.dispatchEvent(new CustomEvent('perk:rain')); // 3D coins spin up too
-    if (reducedMotion.matches) { toast('💸 You made it rain'); return; }
+    document.dispatchEvent(new CustomEvent('peekhole:rain'));
+    const msg = rainMessages[Math.floor(Math.random() * rainMessages.length)];
+    if (reducedMotion.matches) { toast(msg); return; }
+    rainFlash.classList.remove('flash-active');
+    void rainFlash.offsetWidth;
+    rainFlash.classList.add('flash-active');
+    toast(msg);
     if (!sprites) sprites = buildSprites();
     if (!raf) resize();
     spawn(Math.round(Math.min(160, 60 + W / 8)));
@@ -591,7 +430,7 @@ function initRain() {
   });
 }
 
-/* ------------------------------------------------------------- scroll reveal */
+/* scroll reveal */
 function initReveal() {
   const items = $$('.reveal');
   if (!('IntersectionObserver' in window) || reducedMotion.matches) {
@@ -599,28 +438,47 @@ function initReveal() {
     return;
   }
   const io = new IntersectionObserver((entries) => {
-    for (const entry of entries) {
-      if (entry.isIntersecting) {
-        entry.target.classList.add('in');
-        io.unobserve(entry.target);
-      }
-    }
+    const visible = entries.filter((e) => e.isIntersecting);
+    visible.forEach((entry, i) => {
+      entry.target.style.transitionDelay = `${i * 90}ms`;
+      entry.target.classList.add('in');
+      io.unobserve(entry.target);
+      entry.target.addEventListener('transitionend', () => {
+        entry.target.style.transitionDelay = '';
+      }, { once: true });
+    });
   }, { rootMargin: '0px 0px -8% 0px', threshold: 0.1 });
   items.forEach((el) => io.observe(el));
 }
 
-/* -------------------------------------------------------------------- boot */
+/* touch feedback */
+function initTouchFeedback() {
+  if (window.matchMedia('(hover: hover) and (pointer: fine)').matches) return;
+  document.addEventListener('touchstart', (e) => {
+    const btn = e.target instanceof Element ? e.target.closest('button, .btn, [data-rain]') : null;
+    if (btn) btn.classList.add('touch-active');
+  }, { passive: true });
+  const clearTouch = () => {
+    $$('.touch-active').forEach((el) => el.classList.remove('touch-active'));
+  };
+  document.addEventListener('touchend', clearTouch, { passive: true });
+  document.addEventListener('touchcancel', clearTouch, { passive: true });
+}
+
+/* boot */
 function boot() {
   $('#main').tabIndex = -1;
   initGate();
   initNav();
+  initHeaderScroll();
+  initNavHighlight();
   initConfigBits();
   initTicker();
-  initMarket();
   initCountdown();
   initRain();
   initReveal();
   initTilt();
+  initTouchFeedback();
 }
 
 boot();
